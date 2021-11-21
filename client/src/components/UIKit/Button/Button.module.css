@@ -1,0 +1,46 @@
+@import "../../../index.css";
+
+.button {
+  min-height: 32px;
+  position: relative;
+  border: 1px solid;
+  padding: 6px 24px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:focus {
+  outline: none;
+}
+
+.button:disabled {
+  pointer-events: none;
+  color: var(--color-disabled);
+}
+
+.normal {
+  min-width: 80px;
+}
+
+.primary {
+  color: var(--color-white);
+  background-color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.primary:hover {
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-primary-light);
+}
+
+.primaryDisabled {
+  color: var(--color-disabled);
+  background-color: var(--color-disabled-light);
+  border: 1px solid var(--color-disabled-light);
+}
+
+.content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

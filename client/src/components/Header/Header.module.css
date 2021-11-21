@@ -1,0 +1,22 @@
+@import "../../index.css";
+
+.header {
+  height: 50px;
+  padding: 20px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--color-disabled-light) 0px 1px 0px;
+}
+
+@media (max-width: 640px) {
+  .header {
+    height: 80px;
+    display: block;
+  }
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+}

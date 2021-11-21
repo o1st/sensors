@@ -1,0 +1,42 @@
+@import "../../../index.css";
+
+.wrapper {
+  position: relative;
+  display: flex;
+  width: 10px;
+  height: 10px;
+}
+
+.first {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  opacity: 0.75;
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.second {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.active {
+  background-color: var(--color-success);
+  border: 1px solid var(--color-success-light);
+}
+
+.inactive {
+  background-color: var(--color-alert);
+  border: 1px solid var(--color-alert-light);
+}
+
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
