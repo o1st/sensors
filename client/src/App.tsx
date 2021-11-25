@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useMemo, useState } from "react";
+import { FC, memo, useCallback, useEffect, useMemo, useState } from "react";
 
 import { Card, Header } from "./components";
 import { ReactComponent as Spinner } from "./assets/spinner.svg";
@@ -7,6 +7,7 @@ import { useWs } from "./hooks";
 import { Command, Sensor } from "./types";
 
 import styles from "./App.module.css";
+import { baseWebsocket } from "./hooks/BaseWebsocket";
 
 export const App: FC = memo(() => {
   const [showAll, setShowAll] = useState<boolean>(true);
@@ -22,6 +23,10 @@ export const App: FC = memo(() => {
   const filteredCards = useMemo(() => {
     return sensors.filter(({ connected }) => showAll || connected);
   }, [sensors, showAll]);
+
+  useEffect(() => {
+    return baseWebsocket.close;
+  }, []);
 
   return (
     <div className={styles.app}>

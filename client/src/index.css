@@ -17,6 +17,6 @@ body {
   --color-success-light: #34d399;
   --color-disabled: #6b7280;
   --color-disabled-light: #d1d5db;
-  --color-dark: #111;
-  --color-white: #fff;
+  --color-dark: #111111;
+  --color-white: #ffffff;
 }

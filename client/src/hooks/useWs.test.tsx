@@ -1,31 +1,23 @@
-import { renderHook, act } from "@testing-library/react-hooks";
-import { Server, WebSocket } from "mock-socket";
+import { renderHook } from "@testing-library/react-hooks";
+import { Server } from "mock-socket";
 import { sensor } from "../mocks";
-import { Command, Sensor } from "../types";
+import { Sensor } from "../types";
 import { useWs } from "./useWs";
 
+const consoleErrorMock = jest.spyOn(console, "error").mockImplementation();
 describe("useWs", () => {
-  window.WebSocket = WebSocket;
-  global.console.log = jest.fn();
   let mockServer: Server;
 
-  const command: Command = { command: "disconnect", id: "1" };
-
-  beforeAll((done) => {
+  beforeAll(() => {
     mockServer = new Server("ws://localhost:5000");
     mockServer.on("connection", (socket) => {
-      socket.on("message", (data) => {
-        expect(data).toBe(JSON.stringify(command));
-        socket.send(JSON.stringify({ ...sensor, connected: false }));
-      });
       socket.send(JSON.stringify(sensor));
     });
-    done();
   });
-  //   afterAll((done) => {
-  //     mockServer.stop();
-  //     setTimeout(() => done(), 2000);
-  //   });
+
+  afterAll(() => {
+    mockServer.stop();
+  });
 
   test("should return loading true and empty array", () => {
     const { result } = renderHook(() => useWs<Sensor>());
@@ -37,17 +29,19 @@ describe("useWs", () => {
   test("should return loading false and array with 1 sensor", async () => {
     const { result, waitForNextUpdate } = renderHook(() => useWs<Sensor>());
 
+    mockServer.emit("message", { data: sensor });
+
     await waitForNextUpdate();
     expect(result.current[0]).toStrictEqual([sensor]);
     expect(result.current[1]).toBeFalsy();
   });
 
-  test("should return loading false and array with 1 sensor", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useWs<Sensor>());
+  test("should return go to error in parse response", async () => {
+    const { waitForNextUpdate } = renderHook(() => useWs<Sensor>());
 
-    act(() => {
-      result.current[2](command);
-    });
+    mockServer.emit("message", sensor);
+
     await waitForNextUpdate();
+    expect(consoleErrorMock).toBeCalled();
   });
 });

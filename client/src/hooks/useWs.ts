@@ -1,19 +1,18 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Command, Nullable } from "../types";
-
-const url = "ws://localhost:5000";
+import { baseWebsocket, BaseWebsocket } from "./BaseWebsocket";
 
 type TSendFunction = (data: Command) => void;
-type TFunction = <T extends { id: string }>() => [
-  data: T[],
-  isLoading: boolean,
-  send: TSendFunction
-];
+type TFunction = <
+  T extends { id: string; connected: boolean; value: Nullable<string> }
+>() => [data: T[], isLoading: boolean, send: TSendFunction];
 
-export const useWs: TFunction = <T extends { id: string }>() => {
+export const useWs: TFunction = <
+  T extends { id: string; connected: boolean; value: Nullable<string> }
+>() => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [data, setData] = useState<T[]>([]);
-  const ws = useRef<WebSocket>();
+  const [data, setData] = useState<Record<string, T>>({});
+  const ws = useRef<BaseWebsocket>(baseWebsocket);
 
   const send = useCallback((unit: Command) => {
     try {
@@ -23,63 +22,47 @@ export const useWs: TFunction = <T extends { id: string }>() => {
     }
   }, []);
 
-  const onMessage = useCallback(
-    (e) => {
-      let sensor: Nullable<T> = null;
+  const onMessage = useCallback((e) => {
+    let sensor: Nullable<T> = null;
 
-      try {
-        sensor = JSON.parse(e.data);
-      } catch {
-        console.error("Error parsing");
-      }
+    try {
+      sensor = JSON.parse(e.data);
+    } catch {
+      console.error("Error parsing");
+    }
 
-      if (sensor) {
-        setData((state) => {
-          const filteredSensors = state.filter(({ id }) => id !== sensor?.id);
-          const updated = [...filteredSensors, sensor as T];
-          const sorted = updated.sort((a, b) => Number(a.id) - Number(b.id));
-          return sorted;
-        });
-      }
-      if (isLoading) {
-        setIsLoading(false);
-      }
-    },
-    [isLoading]
-  );
+    if (sensor) {
+      setData((state) => {
+        if (sensor) {
+          const copyState = { ...state };
+          copyState[sensor.id] = {
+            ...sensor,
+            value: sensor.connected
+              ? sensor.value
+              : copyState[sensor.id]?.value,
+          };
 
-  const init = useCallback(() => {
-    ws.current = new WebSocket(url);
+          return copyState;
+        }
+        return state;
+      });
+    }
 
-    ws.current.onopen = () => {
-      console.log("opening...");
-    };
-
-    ws.current.onerror = (error) => {
-      console.log("WebSocket error " + error);
-    };
-
-    ws.current.onclose = (e) => {
-      if (e.code === 1005) {
-        console.log("closing...");
-      } else {
-        console.log(
-          "Socket is closed Unexpectedly. Reconnect will be attempted in 4 second.",
-          e.reason
-        );
-        setTimeout(() => {
-          init();
-        }, 4000);
-      }
-    };
-
-    ws.current.onmessage = onMessage;
-  }, [onMessage]);
+    setIsLoading(false);
+  }, []);
 
   useEffect(() => {
-    init();
-    return ws.current?.close();
-  }, [init]);
+    const unSubFn = ws.current.subscribe(onMessage);
+    return unSubFn;
+  }, [onMessage]);
 
-  return [data, isLoading, send];
+  const memoData = useMemo(() => {
+    const valuesOfData = Object.values(data);
+    const filteredValues = valuesOfData.sort(
+      (a, b) => Number(a.id) - Number(b.id)
+    );
+    return filteredValues;
+  }, [data]);
+
+  return [memoData, isLoading, send];
 };
